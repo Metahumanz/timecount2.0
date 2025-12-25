@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import ParticleBackground from './components/ParticleBackground';
 import ClockView from './components/ClockView';
@@ -39,7 +40,8 @@ const App: React.FC = () => {
   // Keep UI visible if settings/menu are open
   const isUiVisible = (!isInactive || isFlashing || isLangMenuOpen || isSettingsOpen);
 
-  const t = translations[language];
+  // Type assertion to allow dynamic key access for settings
+  const t = translations[language] as any;
 
   // Persist Font Weight
   useEffect(() => {
@@ -122,9 +124,6 @@ const App: React.FC = () => {
       [Language.EN]: 'English',
       [Language.ZH]: '中文',
       [Language.DE]: 'Deutsch',
-      [Language.ES]: 'Español',
-      [Language.FR]: 'Français',
-      [Language.JA]: '日本語',
   };
 
   return (
@@ -181,7 +180,7 @@ const App: React.FC = () => {
              <button
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 className={`w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all cursor-pointer ${isSettingsOpen ? 'bg-white text-slate-900' : ''}`}
-                title="Settings"
+                title={t.settings}
              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
              </button>
@@ -233,12 +232,12 @@ const App: React.FC = () => {
         {isSettingsOpen && (
             <div className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold">Settings</h3>
+                    <h3 className="text-lg font-bold">{t.settings}</h3>
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={resetParticleSettings}
                             className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 hover:text-indigo-500 transition-colors cursor-pointer"
-                            title="Restore Default"
+                            title={t.restoreDefault}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                         </button>
@@ -248,10 +247,10 @@ const App: React.FC = () => {
 
                 {/* Typography Settings */}
                 <div className="mb-6 border-b border-white/10 pb-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">Typography</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">{t.typography}</h4>
                      <div className="mb-4">
                         <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-                            <span>Font Weight</span>
+                            <span>{t.fontWeight}</span>
                             <span>{fontWeight}</span>
                         </div>
                         <input 
@@ -265,16 +264,16 @@ const App: React.FC = () => {
                 
                 {/* Particle Settings */}
                 <div>
-                  <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">Particles</h4>
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">{t.particles}</h4>
                   {[
-                    { label: 'Density', key: 'density', min: 0.1, max: 3, step: 0.1 },
-                    { label: 'Speed', key: 'speed', min: 0, max: 3, step: 0.1 },
-                    { label: 'Size', key: 'size', min: 0.5, max: 3, step: 0.1 },
-                    { label: 'Connections', key: 'connections', min: 0, max: 300, step: 10 },
+                    { labelKey: 'density', key: 'density', min: 0.1, max: 3, step: 0.1 },
+                    { labelKey: 'speed', key: 'speed', min: 0, max: 3, step: 0.1 },
+                    { labelKey: 'size', key: 'size', min: 0.5, max: 3, step: 0.1 },
+                    { labelKey: 'connections', key: 'connections', min: 0, max: 300, step: 10 },
                   ].map((item) => (
                     <div key={item.key} className="mb-4">
                           <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-                              <span>{item.label}</span>
+                              <span>{t[item.labelKey]}</span>
                               <span>
                                   {item.key === 'connections' 
                                   ? `${particleConfig[item.key as keyof ParticleConfig]}px` 

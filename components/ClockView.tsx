@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { TimezoneOption, Language, ClockStyle } from '../types';
 import { translations } from '../utils/translations';
@@ -157,9 +158,6 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language, fontWeight }) => {
       [Language.EN]: 'en-US',
       [Language.ZH]: 'zh-CN',
       [Language.DE]: 'de-DE',
-      [Language.ES]: 'es-ES',
-      [Language.FR]: 'fr-FR',
-      [Language.JA]: 'ja-JP',
     };
     const locale = localeMap[language] || 'en-US';
 

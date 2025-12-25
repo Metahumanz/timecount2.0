@@ -1,3 +1,4 @@
+
 import { Language } from '../types';
 
 export const translations = {
@@ -18,7 +19,17 @@ export const translations = {
     exitZen: "Exited Zen Mode",
     min: "min",
     custom: "Custom",
-    start: "Start"
+    start: "Start",
+    // Settings
+    settings: "Settings",
+    typography: "Typography",
+    fontWeight: "Font Weight",
+    particles: "Particles",
+    density: "Density",
+    speed: "Speed",
+    size: "Size",
+    connections: "Connections",
+    restoreDefault: "Restore Default"
   },
   [Language.ZH]: {
     clock: '时钟',
@@ -37,7 +48,17 @@ export const translations = {
     exitZen: "退出沉浸模式",
     min: "分",
     custom: "自定义",
-    start: "开始"
+    start: "开始",
+    // Settings
+    settings: "设置",
+    typography: "排版",
+    fontWeight: "字重",
+    particles: "粒子效果",
+    density: "密度",
+    speed: "速度",
+    size: "大小",
+    connections: "连线",
+    restoreDefault: "恢复默认"
   },
   [Language.DE]: {
     clock: 'Uhr',
@@ -56,63 +77,16 @@ export const translations = {
     exitZen: "Zen-Modus deaktiviert",
     min: "min",
     custom: "Benutzerdefiniert",
-    start: "Starten"
-  },
-  [Language.ES]: {
-    clock: 'Reloj',
-    timer: 'Temporizador',
-    localTime: 'Hora Local',
-    focusTime: 'Tiempo de Foco',
-    clickToPreset: 'Clic para preajustar',
-    sound: 'Sonido',
-    softChime: 'Campana',
-    digitalBeep: 'Pitido',
-    alertAlarm: 'Alarma',
-    timesUp: "¡Tiempo Terminado!",
-    acknowledge: "Entendido",
-    zenModeHint: "DOBLE CLIC EN EL FONDO PARA MODO ZEN",
-    enterZen: "Modo Zen Activado",
-    exitZen: "Modo Zen Desactivado",
-    min: "min",
-    custom: "Personalizar",
-    start: "Iniciar"
-  },
-  [Language.FR]: {
-    clock: 'Horloge',
-    timer: 'Minuteur',
-    localTime: 'Heure Locale',
-    focusTime: 'Temps de Concentration',
-    clickToPreset: 'Cliquer pour prérégler',
-    sound: 'Son',
-    softChime: 'Carillon',
-    digitalBeep: 'Bip',
-    alertAlarm: 'Alarme',
-    timesUp: "C'est fini !",
-    acknowledge: "Compris",
-    zenModeHint: "DOUBLE CLIQUEZ SUR LE FOND POUR LE MODE ZEN",
-    enterZen: "Mode Zen Activé",
-    exitZen: "Mode Zen Désactivé",
-    min: "min",
-    custom: "Personnalisé",
-    start: "Démarrer"
-  },
-  [Language.JA]: {
-    clock: '時計',
-    timer: 'タイマー',
-    localTime: '現地時間',
-    focusTime: '集中時間',
-    clickToPreset: 'クリックして設定',
-    sound: 'サウンド',
-    softChime: 'チャイム',
-    digitalBeep: 'ビープ音',
-    alertAlarm: 'アラーム',
-    timesUp: "時間切れ！",
-    acknowledge: "了解",
-    zenModeHint: "背景をダブルクリックして禅モードへ",
-    enterZen: "禅モードに入りました",
-    exitZen: "禅モードを終了しました",
-    min: "分",
-    custom: "カスタム",
-    start: "開始"
+    start: "Starten",
+    // Settings
+    settings: "Einstellungen",
+    typography: "Typografie",
+    fontWeight: "Schriftstärke",
+    particles: "Partikel",
+    density: "Dichte",
+    speed: "Geschwindigkeit",
+    size: "Größe",
+    connections: "Verbindungen",
+    restoreDefault: "Standard wiederherstellen"
   },
 };
