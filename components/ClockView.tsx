@@ -157,7 +157,6 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language, fontWeight }) => {
     const localeMap: Record<Language, string> = {
       [Language.EN]: 'en-US',
       [Language.ZH]: 'zh-CN',
-      [Language.DE]: 'de-DE',
     };
     const locale = localeMap[language] || 'en-US';
 

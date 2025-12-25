@@ -13,7 +13,6 @@ export enum ClockStyle {
 export enum Language {
   EN = 'en',
   ZH = 'zh',
-  DE = 'de',
 }
 
 export interface TimezoneOption {

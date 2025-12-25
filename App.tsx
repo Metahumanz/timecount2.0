@@ -13,50 +13,72 @@ const App: React.FC = () => {
   const [isDark, setIsDark] = useState(true);
   const [isFlashing, setIsFlashing] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
-  const [language, setLanguage] = useState<Language>(Language.EN);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   
+  // Language State with Persistence
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('chronos_language');
+    if (saved === Language.EN || saved === Language.ZH) {
+      return saved as Language;
+    }
+    const browserLang = navigator.language.slice(0, 2);
+    return browserLang === 'zh' ? Language.ZH : Language.EN;
+  });
+
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
   const defaultParticleConfig: ParticleConfig = {
       density: 1.0,
       speed: 1.0,
       size: 1.0,
       connections: 120,
   };
-  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(defaultParticleConfig);
 
-  // Appearance State
+  // Particle Config State with Persistence
+  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(() => {
+    const saved = localStorage.getItem('chronos_particle_config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return defaultParticleConfig;
+      }
+    }
+    return defaultParticleConfig;
+  });
+
+  // Appearance State with Persistence
   const [fontWeight, setFontWeight] = useState<number>(() => {
     const saved = localStorage.getItem('chronos_font_weight');
     return saved ? parseInt(saved) : 900;
   });
 
-  const langMenuRef = useRef<HTMLDivElement>(null);
-
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const isInactive = useInactivity(5000); 
 
   // Keep UI visible if settings/menu are open
-  const isUiVisible = (!isInactive || isFlashing || isLangMenuOpen || isSettingsOpen);
+  const isUiVisible = (!isInactive || isFlashing || isSettingsOpen);
 
   // Type assertion to allow dynamic key access for settings
   const t = translations[language] as any;
 
-  // Persist Font Weight
+  // Persist Settings
   useEffect(() => {
     localStorage.setItem('chronos_font_weight', fontWeight.toString());
   }, [fontWeight]);
 
-  // System Theme & Language
+  useEffect(() => {
+    localStorage.setItem('chronos_language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('chronos_particle_config', JSON.stringify(particleConfig));
+  }, [particleConfig]);
+
+  // System Theme
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
       setIsDark(false);
-    }
-    const browserLang = navigator.language.slice(0, 2);
-    const supportedLangs = Object.values(Language) as string[];
-    if (supportedLangs.includes(browserLang)) {
-        setLanguage(browserLang as Language);
     }
   }, []);
 
@@ -70,25 +92,11 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
-  // Click Outside for Language Menu
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
-        setIsLangMenuOpen(false);
-      }
-    };
-    if (isLangMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isLangMenuOpen]);
-
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'f') toggleFullscreen();
       if (e.key === 'Escape') {
-          setIsLangMenuOpen(false);
           setIsSettingsOpen(false);
       }
     };
@@ -120,10 +128,8 @@ const App: React.FC = () => {
       setFontWeight(900);
   };
 
-  const languageLabels: Record<Language, string> = {
-      [Language.EN]: 'English',
-      [Language.ZH]: '中文',
-      [Language.DE]: 'Deutsch',
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === Language.EN ? Language.ZH : Language.EN);
   };
 
   return (
@@ -185,33 +191,14 @@ const App: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
              </button>
 
-             {/* Language Toggle (Globe) */}
-             <div className="relative" ref={langMenuRef}>
-                <button 
-                  onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
-                  className="w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
-                >
-                    <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </button>
-                
-                {isLangMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-down z-[100] pointer-events-auto">
-                        {Object.values(Language).map((lang) => (
-                            <button
-                                key={lang}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLanguage(lang);
-                                    setIsLangMenuOpen(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm font-semibold transition-colors cursor-pointer ${language === lang ? 'bg-indigo-500 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'}`}
-                            >
-                                {languageLabels[lang]}
-                            </button>
-                        ))}
-                    </div>
-                )}
-             </div>
+             {/* Language Toggle (Simple Switch) */}
+             <button 
+                onClick={toggleLanguage} 
+                className="w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all cursor-pointer text-xs font-black"
+                title="Switch Language"
+             >
+                {language === Language.ZH ? 'EN' : '中'}
+             </button>
 
             {/* Theme Toggle */}
             <button

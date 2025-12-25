@@ -59,34 +59,5 @@ export const translations = {
     size: "大小",
     connections: "连线",
     restoreDefault: "恢复默认"
-  },
-  [Language.DE]: {
-    clock: 'Uhr',
-    timer: 'Timer',
-    localTime: 'Ortszeit',
-    focusTime: 'Fokuszeit',
-    clickToPreset: 'Klicken für Voreinstellung',
-    sound: 'Ton',
-    softChime: 'Glockenspiel',
-    digitalBeep: 'Piepton',
-    alertAlarm: 'Alarm',
-    timesUp: "Zeit abgelaufen!",
-    acknowledge: "Verstanden",
-    zenModeHint: "DOPPELKLICK AUF HINTERGRUND FÜR ZEN-MODUS",
-    enterZen: "Zen-Modus aktiviert",
-    exitZen: "Zen-Modus deaktiviert",
-    min: "min",
-    custom: "Benutzerdefiniert",
-    start: "Starten",
-    // Settings
-    settings: "Einstellungen",
-    typography: "Typografie",
-    fontWeight: "Schriftstärke",
-    particles: "Partikel",
-    density: "Dichte",
-    speed: "Geschwindigkeit",
-    size: "Größe",
-    connections: "Verbindungen",
-    restoreDefault: "Standard wiederherstellen"
-  },
+  }
 };
