@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSound } from '../hooks/useSound';
 import { SoundType, Language } from '../types';
 import { translations } from '../utils/translations';
-import TimePicker from './TimePicker';
+import TimeSelector from './TimeSelector';
 
 interface Props {
   onAlarmStart: () => void;
@@ -245,10 +245,10 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
   return (
     <div className="flex flex-col items-center animate-fade-in z-10 w-full max-w-[95vw] px-4">
       
-      {/* Timer Display / Picker */}
+      {/* Timer Display / Selector */}
       {isCustomInput && !isRunning ? (
-          <div className="animate-scale-up">
-              <TimePicker 
+          <div className="animate-scale-up relative z-50">
+              <TimeSelector 
                  hours={customHours}
                  minutes={customMinutes}
                  seconds={customSeconds}
@@ -333,7 +333,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
       
       {/* Custom Input Actions */}
       {isCustomInput && !isRunning && (
-           <div className="mt-8 flex gap-4 animate-slide-down">
+           <div className="mt-8 flex gap-4 animate-slide-down z-40 relative">
                <button 
                 onClick={startTimer}
                 className="px-10 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer"
