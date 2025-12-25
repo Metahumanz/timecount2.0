@@ -8,6 +8,7 @@ interface Props {
   onAlarmStop: () => void;
   isUiVisible: boolean;
   language: Language;
+  fontWeight: number;
 }
 
 const AnimatedDigit: React.FC<{ char: string }> = ({ char }) => {
@@ -37,7 +38,7 @@ const SoundVisualizer: React.FC = () => {
     );
 };
 
-const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible, language }) => {
+const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible, language, fontWeight }) => {
   // Load from LocalStorage
   const [duration, setDuration] = useState<number>(() => {
       const saved = localStorage.getItem('chronos_countdown_duration');
@@ -208,7 +209,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
         
         <button
           onClick={stopAlarm}
-          className="px-10 py-5 bg-white text-black text-2xl font-bold rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95"
+          className="px-10 py-5 bg-white text-black text-2xl font-bold rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95 cursor-pointer"
         >
           {t.acknowledge}
         </button>
@@ -236,7 +237,10 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
       
       {/* Timer Display */}
       {isCustomInput && !isRunning ? (
-          <div className="flex items-center justify-center gap-1 sm:gap-2 md:gap-4 text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black text-slate-800 dark:text-slate-100 animate-scale-up">
+          <div 
+             className="flex items-center justify-center gap-1 sm:gap-2 md:gap-4 text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black text-slate-800 dark:text-slate-100 animate-scale-up"
+             style={{ fontWeight: fontWeight }}
+          >
               <div className="flex flex-col items-center">
                   <input 
                     type="number" 
@@ -246,6 +250,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
                     placeholder="00"
                     min="0"
                     max="99"
+                    style={{ fontWeight: fontWeight }}
                   />
                   <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">HRS</span>
               </div>
@@ -259,6 +264,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
                     placeholder="00"
                     min="0"
                     max="59"
+                    style={{ fontWeight: fontWeight }}
                   />
                   <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">MIN</span>
               </div>
@@ -272,6 +278,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
                      placeholder="00"
                      min="0"
                      max="59"
+                     style={{ fontWeight: fontWeight }}
                   />
                   <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">SEC</span>
               </div>
@@ -281,7 +288,10 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
             className="relative group cursor-pointer"
             onClick={() => !isRunning && setEditMode(!editMode)}
         >
-            <h1 className={`flex justify-center ${fontSizeClass} font-black tracking-tighter leading-none tabular-nums transition-all duration-300 space-x-1 md:space-x-2 drop-shadow-2xl ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-100'}`}>
+            <h1 
+               className={`flex justify-center ${fontSizeClass} tracking-tighter leading-none tabular-nums transition-all duration-300 space-x-1 md:space-x-2 drop-shadow-2xl ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-100'}`}
+               style={{ fontWeight: fontWeight }}
+            >
                 {timeString.split('').map((char, index) => (
                     <AnimatedDigit key={index} char={char} />
                 ))}
@@ -304,14 +314,14 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
                 <button
                 key={m}
                 onClick={() => setPreset(m)}
-                className="px-5 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-white/20 hover:bg-indigo-500 hover:text-white transition-all text-base font-bold shadow-sm text-slate-800 dark:text-white"
+                className="px-5 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-white/20 hover:bg-indigo-500 hover:text-white transition-all text-base font-bold shadow-sm text-slate-800 dark:text-white cursor-pointer"
                 >
                 {m} {t.min}
                 </button>
             ))}
             <button
                 onClick={enableCustomInput}
-                className="px-5 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-white/20 hover:bg-indigo-500 hover:text-white transition-all text-base font-bold shadow-sm text-slate-800 dark:text-white"
+                className="px-5 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-white/20 hover:bg-indigo-500 hover:text-white transition-all text-base font-bold shadow-sm text-slate-800 dark:text-white cursor-pointer"
             >
                 {t.custom}
             </button>
@@ -328,7 +338,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
                      setSelectedSound(st);
                      playSound(st);
                    }}
-                   className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${
+                   className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all cursor-pointer ${
                      selectedSound === st 
                        ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-md' 
                        : 'text-slate-500 dark:text-slate-400 hover:bg-white/30 dark:hover:bg-white/10'
@@ -347,13 +357,13 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
            <div className="mt-8 flex gap-4 animate-slide-down">
                <button 
                 onClick={startTimer}
-                className="px-8 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg transition-transform hover:scale-105"
+                className="px-8 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg transition-transform hover:scale-105 cursor-pointer"
                >
                    {t.start}
                </button>
                <button 
                 onClick={() => { setIsCustomInput(false); setEditMode(true); }}
-                className="px-8 py-3 rounded-full bg-transparent border border-slate-400 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-bold transition-colors"
+                className="px-8 py-3 rounded-full bg-transparent border border-slate-400 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-bold transition-colors cursor-pointer"
                >
                    Back
                </button>
@@ -366,14 +376,14 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
             {!isRunning ? (
             <button
                 onClick={startTimer}
-                className="w-20 h-20 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-xl shadow-indigo-500/30 transition-all hover:scale-110 active:scale-95"
+                className="w-20 h-20 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-xl shadow-indigo-500/30 transition-all hover:scale-110 active:scale-95 cursor-pointer"
             >
                 <svg className="w-10 h-10 translate-x-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             ) : (
             <button
                 onClick={pauseTimer}
-                className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white flex items-center justify-center shadow-xl transition-all hover:scale-110 active:scale-95"
+                className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white flex items-center justify-center shadow-xl transition-all hover:scale-110 active:scale-95 cursor-pointer"
             >
                 <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
@@ -381,7 +391,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
             
             <button
             onClick={resetTimer}
-            className="w-20 h-20 rounded-full bg-transparent border-2 border-slate-300 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-500 flex items-center justify-center transition-all hover:rotate-180 active:scale-95"
+            className="w-20 h-20 rounded-full bg-transparent border-2 border-slate-300 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-500 flex items-center justify-center transition-all hover:rotate-180 active:scale-95 cursor-pointer"
             >
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>

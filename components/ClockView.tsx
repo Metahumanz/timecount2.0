@@ -5,6 +5,7 @@ import { translations } from '../utils/translations';
 interface Props {
   isUiVisible: boolean;
   language: Language;
+  fontWeight: number;
 }
 
 // --- ANALOG CLOCK COMPONENT ---
@@ -126,7 +127,7 @@ const DigitalDigit: React.FC<{ char: string }> = ({ char }) => {
   );
 };
 
-const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
+const ClockView: React.FC<Props> = ({ isUiVisible, language, fontWeight }) => {
   const [time, setTime] = useState(new Date());
   const [stayDuration, setStayDuration] = useState('00:00:00');
   const [selectedZone, setSelectedZone] = useState<string>('local');
@@ -237,7 +238,10 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
         )}
         {clockStyle === ClockStyle.DIGITAL && (
             <div className="relative">
-                <h1 className="flex justify-center text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] 2xl:text-[14rem] font-black tracking-tighter leading-none drop-shadow-2xl text-slate-800 dark:text-slate-100 select-none transition-all duration-300 transform">
+                <h1 
+                  className="flex justify-center text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] 2xl:text-[14rem] tracking-tighter leading-none drop-shadow-2xl text-slate-800 dark:text-slate-100 select-none transition-all duration-300 transform"
+                  style={{ fontWeight: fontWeight }}
+                >
                     {timeString.split('').map((char, index) => (
                         <DigitalDigit key={index} char={char} />
                     ))}

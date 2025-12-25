@@ -25,6 +25,12 @@ const App: React.FC = () => {
   };
   const [particleConfig, setParticleConfig] = useState<ParticleConfig>(defaultParticleConfig);
 
+  // Appearance State
+  const [fontWeight, setFontWeight] = useState<number>(() => {
+    const saved = localStorage.getItem('chronos_font_weight');
+    return saved ? parseInt(saved) : 900;
+  });
+
   const langMenuRef = useRef<HTMLDivElement>(null);
 
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -34,6 +40,11 @@ const App: React.FC = () => {
   const isUiVisible = (!isInactive || isFlashing || isLangMenuOpen || isSettingsOpen);
 
   const t = translations[language];
+
+  // Persist Font Weight
+  useEffect(() => {
+    localStorage.setItem('chronos_font_weight', fontWeight.toString());
+  }, [fontWeight]);
 
   // System Theme & Language
   useEffect(() => {
@@ -104,6 +115,7 @@ const App: React.FC = () => {
 
   const resetParticleSettings = () => {
       setParticleConfig(defaultParticleConfig);
+      setFontWeight(900);
   };
 
   const languageLabels: Record<Language, string> = {
@@ -169,7 +181,7 @@ const App: React.FC = () => {
              <button
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 className={`w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all cursor-pointer ${isSettingsOpen ? 'bg-white text-slate-900' : ''}`}
-                title="Particle Settings"
+                title="Settings"
              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
              </button>
@@ -184,11 +196,12 @@ const App: React.FC = () => {
                 </button>
                 
                 {isLangMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-down z-50 pointer-events-auto">
+                    <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-down z-[100] pointer-events-auto">
                         {Object.values(Language).map((lang) => (
                             <button
                                 key={lang}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setLanguage(lang);
                                     setIsLangMenuOpen(false);
                                 }}
@@ -218,9 +231,9 @@ const App: React.FC = () => {
 
         {/* Settings Modal */}
         {isSettingsOpen && (
-            <div className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white">
+            <div className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold">Particles</h3>
+                    <h3 className="text-lg font-bold">Settings</h3>
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={resetParticleSettings}
@@ -232,30 +245,51 @@ const App: React.FC = () => {
                         <button onClick={() => setIsSettingsOpen(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer">✕</button>
                     </div>
                 </div>
-                
-                {[
-                  { label: 'Density', key: 'density', min: 0.1, max: 3, step: 0.1 },
-                  { label: 'Speed', key: 'speed', min: 0, max: 3, step: 0.1 },
-                  { label: 'Size', key: 'size', min: 0.5, max: 3, step: 0.1 },
-                  { label: 'Connections', key: 'connections', min: 0, max: 300, step: 10 },
-                ].map((item) => (
-                   <div key={item.key} className="mb-4">
+
+                {/* Typography Settings */}
+                <div className="mb-6 border-b border-white/10 pb-4">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">Typography</h4>
+                     <div className="mb-4">
                         <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
-                            <span>{item.label}</span>
-                            <span>
-                                {item.key === 'connections' 
-                                 ? `${particleConfig[item.key as keyof ParticleConfig]}px` 
-                                 : `${Math.round(particleConfig[item.key as keyof ParticleConfig] * 100)}%`}
-                            </span>
+                            <span>Font Weight</span>
+                            <span>{fontWeight}</span>
                         </div>
                         <input 
-                            type="range" min={item.min} max={item.max} step={item.step}
-                            value={particleConfig[item.key as keyof ParticleConfig]}
-                            onChange={(e) => setParticleConfig({...particleConfig, [item.key]: parseFloat(e.target.value)})}
+                            type="range" min="100" max="900" step="100"
+                            value={fontWeight}
+                            onChange={(e) => setFontWeight(parseInt(e.target.value))}
                             className="w-full h-1.5 bg-slate-300 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
                         />
                    </div>
-                ))}
+                </div>
+                
+                {/* Particle Settings */}
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">Particles</h4>
+                  {[
+                    { label: 'Density', key: 'density', min: 0.1, max: 3, step: 0.1 },
+                    { label: 'Speed', key: 'speed', min: 0, max: 3, step: 0.1 },
+                    { label: 'Size', key: 'size', min: 0.5, max: 3, step: 0.1 },
+                    { label: 'Connections', key: 'connections', min: 0, max: 300, step: 10 },
+                  ].map((item) => (
+                    <div key={item.key} className="mb-4">
+                          <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
+                              <span>{item.label}</span>
+                              <span>
+                                  {item.key === 'connections' 
+                                  ? `${particleConfig[item.key as keyof ParticleConfig]}px` 
+                                  : `${Math.round(particleConfig[item.key as keyof ParticleConfig] * 100)}%`}
+                              </span>
+                          </div>
+                          <input 
+                              type="range" min={item.min} max={item.max} step={item.step}
+                              value={particleConfig[item.key as keyof ParticleConfig]}
+                              onChange={(e) => setParticleConfig({...particleConfig, [item.key]: parseFloat(e.target.value)})}
+                              className="w-full h-1.5 bg-slate-300 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+                          />
+                    </div>
+                  ))}
+                </div>
             </div>
         )}
 
@@ -265,6 +299,7 @@ const App: React.FC = () => {
              <ClockView 
                isUiVisible={isUiVisible} 
                language={language}
+               fontWeight={fontWeight}
              />
            </div>
            
@@ -274,6 +309,7 @@ const App: React.FC = () => {
                onAlarmStop={() => setIsFlashing(false)} 
                isUiVisible={isUiVisible}
                language={language}
+               fontWeight={fontWeight}
              />
            </div>
         </main>
