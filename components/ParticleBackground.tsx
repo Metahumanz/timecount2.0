@@ -9,6 +9,7 @@ interface Props {
 const ParticleBackground: React.FC<Props> = ({ isDark, onDoubleClick }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
+  // Store mouse state in ref to access inside animation loop
   const mouseRef = useRef<{ x: number; y: number; isActive: boolean }>({ x: 0, y: 0, isActive: false });
   const animationFrameRef = useRef<number | null>(null);
 
@@ -17,6 +18,28 @@ const ParticleBackground: React.FC<Props> = ({ isDark, onDoubleClick }) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // --- EVENT LISTENERS (Attached to Window for global capture) ---
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY, isActive: true };
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+        // Prevent default only if necessary, but here we just want to track coordinates
+        if (e.touches.length > 0) {
+            mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, isActive: true };
+        }
+    };
+
+    const handleInteractionEnd = () => {
+       mouseRef.current.isActive = false;
+    };
+    
+    // Add global listeners to ensure particles react even when mouse is over UI elements
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleInteractionEnd);
+    window.addEventListener('mouseup', handleInteractionEnd);
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -62,23 +85,24 @@ const ParticleBackground: React.FC<Props> = ({ isDark, onDoubleClick }) => {
         if (p.y < 0) p.y = canvas.height;
         if (p.y > canvas.height) p.y = 0;
 
-        // Mouse Interaction
+        // Interaction
         if (mouseRef.current.isActive) {
           const dx = mouseRef.current.x - p.x;
           const dy = mouseRef.current.y - p.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          const forceRadius = 200;
+          const forceRadius = 250; // Radius of influence
 
           if (distance < forceRadius) {
             const forceDirectionX = dx / distance;
             const forceDirectionY = dy / distance;
-            // Create a subtle attraction then repulsion (wave effect)
+            
+            // Create a "Wave" effect: push away if very close, pull slightly if further out
             const maxDistance = forceRadius;
             const force = (maxDistance - distance) / maxDistance;
             
             // Gentle Repulsion
-            const directionX = forceDirectionX * force * p.density * 0.6;
-            const directionY = forceDirectionY * force * p.density * 0.6;
+            const directionX = forceDirectionX * force * p.density * 1.5;
+            const directionY = forceDirectionY * force * p.density * 1.5;
 
             p.x -= directionX;
             p.y -= directionY;
@@ -124,45 +148,24 @@ const ParticleBackground: React.FC<Props> = ({ isDark, onDoubleClick }) => {
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleInteractionEnd);
+      window.removeEventListener('mouseup', handleInteractionEnd);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [isDark]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    mouseRef.current = { x: e.clientX, y: e.clientY, isActive: true };
-  };
-
-  const handleMouseLeave = () => {
-    mouseRef.current.isActive = false;
-  };
-
   const handleClick = (e: React.MouseEvent) => {
-     const burstRadius = 250;
-     particlesRef.current.forEach(p => {
-       const dx = p.x - e.clientX;
-       const dy = p.y - e.clientY;
-       const dist = Math.sqrt(dx*dx + dy*dy);
-       if (dist < burstRadius) {
-         // Push away faster on click
-         p.vx += (dx / dist) * 2;
-         p.vy += (dy / dist) * 2;
-       }
-     });
+    // Optional: Add burst effect logic if needed directly via canvas click
   };
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute top-0 left-0 w-full h-full cursor-pointer touch-none"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
+      className="absolute top-0 left-0 w-full h-full touch-none"
       onDoubleClick={onDoubleClick}
-      onTouchMove={(e) => {
-        const touch = e.touches[0];
-        mouseRef.current = { x: touch.clientX, y: touch.clientY, isActive: true };
-      }}
-      onTouchEnd={() => mouseRef.current.isActive = false}
+      onClick={handleClick}
     />
   );
 };

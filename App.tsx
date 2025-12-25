@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ParticleBackground from './components/ParticleBackground';
 import ClockView from './components/ClockView';
 import CountdownView from './components/CountdownView';
@@ -68,7 +68,13 @@ const App: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleDoubleTap = () => {
+  // Handle Double Click globally on the wrapper to ensure it works even if clicking UI padding
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    // Prevent fullscreen trigger if clicking interactive elements (buttons, inputs)
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('select')) {
+        return;
+    }
     toggleFullscreen();
     if (isFullscreen) {
       showNotification(t.exitZen);
@@ -89,13 +95,14 @@ const App: React.FC = () => {
       className={`relative w-full h-screen overflow-hidden transition-colors duration-500 ease-in-out font-sans select-none
         ${isDark ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-800'}
       `}
+      onDoubleClick={handleDoubleTap}
     >
       {/* Alarm Flash Overlay */}
       <div className={`absolute inset-0 pointer-events-none z-40 bg-red-500/20 mix-blend-overlay transition-opacity duration-100 ${isFlashing ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
 
       {/* Particle Canvas Layer */}
       <div className="absolute inset-0 z-0">
-        <ParticleBackground isDark={isDark} onDoubleClick={handleDoubleTap} />
+        <ParticleBackground isDark={isDark} onDoubleClick={() => {}} />
       </div>
 
       {/* UI Content Layer */}
@@ -172,21 +179,23 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-grow flex items-center justify-center pointer-events-auto p-4 w-full">
-           {activeTab === AppMode.CLOCK ? (
+        {/* Main Content Area - Using hidden class to preserve state instead of unmounting */}
+        <main className="flex-grow flex items-center justify-center pointer-events-auto p-4 w-full relative">
+           <div className={`w-full flex justify-center ${activeTab === AppMode.CLOCK ? 'block' : 'hidden'}`}>
              <ClockView 
                isUiVisible={isUiVisible} 
                language={language}
              />
-           ) : (
+           </div>
+           
+           <div className={`w-full flex justify-center ${activeTab === AppMode.COUNTDOWN ? 'block' : 'hidden'}`}>
              <CountdownView 
                onAlarmStart={() => setIsFlashing(true)} 
                onAlarmStop={() => setIsFlashing(false)} 
                isUiVisible={isUiVisible}
                language={language}
              />
-           )}
+           </div>
         </main>
         
         {/* Footer Hint - Fades Out */}

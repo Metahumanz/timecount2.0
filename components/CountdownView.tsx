@@ -21,14 +21,26 @@ const AnimatedDigit: React.FC<{ char: string }> = ({ char }) => {
 };
 
 const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible, language }) => {
-  const [duration, setDuration] = useState<number>(5 * 60); 
-  const [remaining, setRemaining] = useState<number>(5 * 60);
+  // Load from LocalStorage
+  const [duration, setDuration] = useState<number>(() => {
+      const saved = localStorage.getItem('chronos_countdown_duration');
+      return saved ? parseInt(saved) : 5 * 60;
+  });
+  
+  const [remaining, setRemaining] = useState<number>(duration);
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [selectedSound, setSelectedSound] = useState<SoundType>(SoundType.CHIME);
+  
+  // Load sound preference
+  const [selectedSound, setSelectedSound] = useState<SoundType>(() => {
+      const saved = localStorage.getItem('chronos_sound_type');
+      return (saved as SoundType) || SoundType.CHIME;
+  });
+
   const [editMode, setEditMode] = useState(false);
   
   const [isCustomInput, setIsCustomInput] = useState(false);
+  const [customHours, setCustomHours] = useState<string>('0');
   const [customMinutes, setCustomMinutes] = useState<string>('5');
   const [customSeconds, setCustomSeconds] = useState<string>('00');
 
@@ -39,15 +51,35 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
 
   const t = translations[language];
 
+  // Save preferences
+  useEffect(() => {
+    localStorage.setItem('chronos_countdown_duration', duration.toString());
+  }, [duration]);
+
+  useEffect(() => {
+    localStorage.setItem('chronos_sound_type', selectedSound);
+  }, [selectedSound]);
+
   const startTimer = () => {
     let targetSeconds = remaining;
     
-    if (isCustomInput && !isRunning && remaining === duration) {
-       const m = parseInt(customMinutes) || 0;
-       const s = parseInt(customSeconds) || 0;
-       targetSeconds = m * 60 + s;
+    // If starting from full duration or custom input
+    if ((isCustomInput || remaining === duration) && !isRunning) {
+       let h = 0, m = 0, s = 0;
+       if (isCustomInput) {
+           h = parseInt(customHours) || 0;
+           m = parseInt(customMinutes) || 0;
+           s = parseInt(customSeconds) || 0;
+           targetSeconds = h * 3600 + m * 60 + s;
+           // If valid new time, update duration
+           if (targetSeconds > 0) {
+             setDuration(targetSeconds);
+           }
+       } else {
+           targetSeconds = duration;
+       }
+       
        if (targetSeconds <= 0) return;
-       setDuration(targetSeconds);
        setRemaining(targetSeconds);
     } else if (remaining <= 0) {
         return;
@@ -87,11 +119,8 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
     onAlarmStop();
     if (soundIntervalRef.current) clearInterval(soundIntervalRef.current);
     
-    const m = parseInt(customMinutes) || 0;
-    const s = parseInt(customSeconds) || 0;
-    const resetVal = isCustomInput ? (m * 60 + s) : duration;
-    
-    setRemaining(resetVal > 0 ? resetVal : duration);
+    // Reset to current duration (persisted)
+    setRemaining(duration);
   };
 
   const handleFinish = () => {
@@ -119,10 +148,17 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
     };
   }, []);
 
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const formatTime = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    if (h > 0) {
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+    return `${pad(m)}:${pad(s)}`;
   };
 
   const setPreset = (mins: number) => {
@@ -131,11 +167,16 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
     setRemaining(secs);
     setEditMode(false);
     setIsCustomInput(false);
+    setCustomHours('0'); // Reset custom inputs visually
+    setCustomMinutes(mins.toString());
+    setCustomSeconds('00');
   };
 
   const enableCustomInput = () => {
       setIsCustomInput(true);
       if (isRunning) pauseTimer();
+      // Pre-fill inputs based on current duration if it's not running? 
+      // Or just default to 00:05:00. Let's keep existing values or reset.
   };
 
   if (isFinished) {
@@ -155,46 +196,78 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
   }
 
   const timeString = formatTime(remaining);
+  const hasHours = remaining >= 3600;
+
+  // Sound Labels
+  const soundLabels: Record<SoundType, string> = {
+    [SoundType.CHIME]: t.softChime,
+    [SoundType.BEEP]: t.digitalBeep,
+    [SoundType.ALARM]: t.alertAlarm,
+  };
+
+  // Determine font size based on length of string
+  const fontSizeClass = hasHours || isCustomInput
+    ? "text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem]" // Smaller if hours exist
+    : "text-8xl sm:text-8xl md:text-9xl lg:text-[10rem] 2xl:text-[14rem]"; // Larger if just MM:SS
 
   return (
     <div className="flex flex-col items-center animate-fade-in z-10 w-full max-w-[95vw] px-4">
       
       {/* Timer Display */}
       {isCustomInput && !isRunning ? (
-          <div className="flex items-center gap-2 sm:gap-4 text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black text-slate-800 dark:text-slate-100 animate-scale-up">
-              <input 
-                type="number" 
-                value={customMinutes}
-                onChange={(e) => setCustomMinutes(e.target.value)}
-                className="bg-transparent text-center w-[1.5em] focus:outline-none border-b-4 border-indigo-500/50 focus:border-indigo-500 p-0 text-slate-800 dark:text-slate-100"
-                placeholder="00"
-                min="0"
-                max="999"
-              />
-              <span className="-translate-y-1 md:-translate-y-4 text-slate-800 dark:text-slate-100">:</span>
-              <input 
-                 type="number" 
-                 value={customSeconds}
-                 onChange={(e) => setCustomSeconds(e.target.value)}
-                 className="bg-transparent text-center w-[1.5em] focus:outline-none border-b-4 border-indigo-500/50 focus:border-indigo-500 p-0 text-slate-800 dark:text-slate-100"
-                 placeholder="00"
-                 min="0"
-                 max="59"
-              />
+          <div className="flex items-center justify-center gap-1 sm:gap-2 md:gap-4 text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black text-slate-800 dark:text-slate-100 animate-scale-up">
+              <div className="flex flex-col items-center">
+                  <input 
+                    type="number" 
+                    value={customHours}
+                    onChange={(e) => setCustomHours(e.target.value)}
+                    className="bg-transparent text-center w-[1.4em] focus:outline-none border-b-4 border-indigo-500/50 focus:border-indigo-500 p-0 text-slate-800 dark:text-slate-100"
+                    placeholder="00"
+                    min="0"
+                    max="99"
+                  />
+                  <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">HRS</span>
+              </div>
+              <span className="-translate-y-4 md:-translate-y-8 text-slate-800 dark:text-slate-100">:</span>
+              <div className="flex flex-col items-center">
+                  <input 
+                    type="number" 
+                    value={customMinutes}
+                    onChange={(e) => setCustomMinutes(e.target.value)}
+                    className="bg-transparent text-center w-[1.4em] focus:outline-none border-b-4 border-indigo-500/50 focus:border-indigo-500 p-0 text-slate-800 dark:text-slate-100"
+                    placeholder="00"
+                    min="0"
+                    max="59"
+                  />
+                  <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">MIN</span>
+              </div>
+              <span className="-translate-y-4 md:-translate-y-8 text-slate-800 dark:text-slate-100">:</span>
+              <div className="flex flex-col items-center">
+                  <input 
+                     type="number" 
+                     value={customSeconds}
+                     onChange={(e) => setCustomSeconds(e.target.value)}
+                     className="bg-transparent text-center w-[1.4em] focus:outline-none border-b-4 border-indigo-500/50 focus:border-indigo-500 p-0 text-slate-800 dark:text-slate-100"
+                     placeholder="00"
+                     min="0"
+                     max="59"
+                  />
+                  <span className="text-xs sm:text-sm font-bold opacity-50 mt-2 tracking-widest">SEC</span>
+              </div>
           </div>
       ) : (
         <div 
             className="relative group cursor-pointer"
             onClick={() => !isRunning && setEditMode(!editMode)}
         >
-            <h1 className={`flex justify-center text-8xl sm:text-8xl md:text-9xl lg:text-[10rem] 2xl:text-[14rem] font-black tracking-tighter leading-none tabular-nums transition-colors duration-300 space-x-1 md:space-x-2 drop-shadow-2xl ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-100'}`}>
+            <h1 className={`flex justify-center ${fontSizeClass} font-black tracking-tighter leading-none tabular-nums transition-all duration-300 space-x-1 md:space-x-2 drop-shadow-2xl ${isRunning ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-100'}`}>
                 {timeString.split('').map((char, index) => (
                     <AnimatedDigit key={index} char={char} />
                 ))}
             </h1>
             
             {!isRunning && !editMode && (
-            <div className={`absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-bold transition-opacity duration-1000 whitespace-nowrap text-slate-500 dark:text-slate-400 ${isUiVisible ? 'opacity-50' : 'opacity-0'}`}>
+            <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold transition-opacity duration-1000 whitespace-nowrap text-slate-500 dark:text-slate-400 ${isUiVisible ? 'opacity-50' : 'opacity-0'}`}>
                 {t.clickToPreset}
             </div>
             )}
@@ -204,6 +277,7 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
       {/* Preset / Edit Controls */}
       {editMode && !isRunning && !isCustomInput && (
         <div className={`mt-8 flex flex-col items-center gap-6 animate-slide-down w-full transition-opacity duration-1000 ${isUiVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Preset Buttons */}
           <div className="flex flex-wrap justify-center gap-3">
             {[5, 10, 25, 45, 60].map(m => (
                 <button
@@ -222,17 +296,27 @@ const CountdownView: React.FC<Props> = ({ onAlarmStart, onAlarmStop, isUiVisible
             </button>
           </div>
 
-          <div className="w-auto flex justify-center gap-4 items-center p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-white/10">
-             <label className="text-xs font-bold uppercase opacity-60 text-slate-600 dark:text-slate-400">{t.sound}:</label>
-             <select 
-               value={selectedSound} 
-               onChange={(e) => setSelectedSound(e.target.value as SoundType)}
-               className="bg-transparent border-none text-sm font-bold focus:outline-none dark:text-white text-slate-900 cursor-pointer"
-             >
-               <option value={SoundType.CHIME}>{t.softChime}</option>
-               <option value={SoundType.BEEP}>{t.digitalBeep}</option>
-               <option value={SoundType.ALARM}>{t.alertAlarm}</option>
-             </select>
+          {/* Sound Selector UI */}
+          <div className="w-auto p-2 rounded-2xl bg-black/5 dark:bg-white/5 border border-white/10 flex items-center gap-2">
+             <span className="text-xs font-bold uppercase opacity-60 text-slate-600 dark:text-slate-400 px-2">{t.sound}:</span>
+             <div className="flex bg-white/50 dark:bg-black/20 rounded-xl p-1">
+               {Object.values(SoundType).map((st) => (
+                 <button
+                   key={st}
+                   onClick={() => {
+                     setSelectedSound(st);
+                     playSound(st);
+                   }}
+                   className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${
+                     selectedSound === st 
+                       ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-md' 
+                       : 'text-slate-500 dark:text-slate-400 hover:bg-white/30 dark:hover:bg-white/10'
+                   }`}
+                 >
+                   {soundLabels[st]}
+                 </button>
+               ))}
+             </div>
           </div>
         </div>
       )}
