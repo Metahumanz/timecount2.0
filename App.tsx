@@ -26,6 +26,8 @@ const App: React.FC = () => {
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
   
   const defaultParticleConfig: ParticleConfig = {
       density: 1.0,
@@ -91,6 +93,26 @@ const App: React.FC = () => {
       root.classList.remove('dark');
     }
   }, [isDark]);
+
+  // Click Outside for Settings Menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isSettingsOpen &&
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target as Node) &&
+        settingsBtnRef.current &&
+        !settingsBtnRef.current.contains(event.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    if (isSettingsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSettingsOpen]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -184,6 +206,7 @@ const App: React.FC = () => {
              
              {/* Settings Toggle */}
              <button
+                ref={settingsBtnRef}
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                 className={`w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all cursor-pointer ${isSettingsOpen ? 'bg-white text-slate-900' : ''}`}
                 title={t.settings}
@@ -217,7 +240,10 @@ const App: React.FC = () => {
 
         {/* Settings Modal */}
         {isSettingsOpen && (
-            <div className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white max-h-[80vh] overflow-y-auto">
+            <div 
+              ref={settingsRef}
+              className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white max-h-[80vh] overflow-y-auto"
+            >
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold">{t.settings}</h3>
                     <div className="flex items-center gap-2">
