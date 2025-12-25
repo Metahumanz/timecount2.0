@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ParticleBackground from './components/ParticleBackground';
 import ClockView from './components/ClockView';
 import CountdownView from './components/CountdownView';
-import { AppMode, Language } from './types';
+import { AppMode, Language, ParticleConfig } from './types';
 import { useFullscreen } from './hooks/useFullscreen';
 import { useInactivity } from './hooks/useInactivity';
 import { translations } from './utils/translations';
@@ -15,22 +15,31 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>(Language.EN);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   
+  // Settings State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const defaultParticleConfig: ParticleConfig = {
+      density: 1.0,
+      speed: 1.0,
+      size: 1.0,
+      connections: 120,
+  };
+  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(defaultParticleConfig);
+
+  const langMenuRef = useRef<HTMLDivElement>(null);
+
   const { isFullscreen, toggleFullscreen } = useFullscreen();
-  // Hide UI after 5 seconds of inactivity
   const isInactive = useInactivity(5000); 
 
-  const isUiVisible = !isInactive || isFlashing; // Always show if alarming
+  // Keep UI visible if settings/menu are open
+  const isUiVisible = (!isInactive || isFlashing || isLangMenuOpen || isSettingsOpen);
 
   const t = translations[language];
 
-  // Handle system preference initially
+  // System Theme & Language
   useEffect(() => {
-    // Theme preference
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
       setIsDark(false);
     }
-    
-    // Language preference
     const browserLang = navigator.language.slice(0, 2);
     const supportedLangs = Object.values(Language) as string[];
     if (supportedLangs.includes(browserLang)) {
@@ -38,17 +47,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Keyboard Shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'f') {
-        toggleFullscreen();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleFullscreen]);
-
+  // Theme Class Toggle
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -57,10 +56,35 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
+  // Click Outside for Language Menu
   useEffect(() => {
-    if (isFullscreen) {
-      showNotification(t.enterZen);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    if (isLangMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isLangMenuOpen]);
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'f') toggleFullscreen();
+      if (e.key === 'Escape') {
+          setIsLangMenuOpen(false);
+          setIsSettingsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleFullscreen]);
+
+  // Notifications
+  useEffect(() => {
+    if (isFullscreen) showNotification(t.enterZen);
   }, [isFullscreen, language]);
 
   const showNotification = (msg: string) => {
@@ -68,17 +92,17 @@ const App: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Handle Double Click globally on the wrapper to ensure it works even if clicking UI padding
   const handleDoubleTap = (e: React.MouseEvent) => {
-    // Prevent fullscreen trigger if clicking interactive elements (buttons, inputs)
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('input') || target.closest('select') || target.closest('a')) {
+    if (target.closest('button') || target.closest('input') || target.closest('select') || target.closest('a') || target.closest('.settings-modal')) {
         return;
     }
     toggleFullscreen();
-    if (isFullscreen) {
-      showNotification(t.exitZen);
-    }
+    if (isFullscreen) showNotification(t.exitZen);
+  };
+
+  const resetParticleSettings = () => {
+      setParticleConfig(defaultParticleConfig);
   };
 
   const languageLabels: Record<Language, string> = {
@@ -97,22 +121,20 @@ const App: React.FC = () => {
       `}
       onDoubleClick={handleDoubleTap}
     >
-      {/* Alarm Flash Overlay */}
       <div className={`absolute inset-0 pointer-events-none z-40 bg-red-500/20 mix-blend-overlay transition-opacity duration-100 ${isFlashing ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
 
-      {/* Particle Canvas Layer */}
       <div className="absolute inset-0 z-0">
         <ParticleBackground 
             isDark={isDark} 
             isAlarming={isFlashing}
+            config={particleConfig}
             onDoubleClick={() => {}} 
         />
       </div>
 
-      {/* UI Content Layer */}
       <div className="relative z-10 flex flex-col h-full pointer-events-none">
         
-        {/* Header / Nav - Fades Out */}
+        {/* Header */}
         <header 
           className={`flex justify-between items-center p-6 md:p-10 pointer-events-auto transition-all duration-1000 transform ${isUiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 pointer-events-none'}`}
         >
@@ -141,8 +163,18 @@ const App: React.FC = () => {
           </nav>
 
           <div className="flex gap-4 items-center relative">
+             
+             {/* Settings Toggle */}
+             <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={`w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all ${isSettingsOpen ? 'bg-white text-slate-900' : ''}`}
+                title="Particle Settings"
+             >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+             </button>
+
              {/* Language Toggle (Globe) */}
-             <div className="relative">
+             <div className="relative" ref={langMenuRef}>
                 <button 
                   onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
                   className="w-10 h-10 rounded-full bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all"
@@ -151,7 +183,7 @@ const App: React.FC = () => {
                 </button>
                 
                 {isLangMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-down">
+                    <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-down z-50">
                         {Object.values(Language).map((lang) => (
                             <button
                                 key={lang}
@@ -159,7 +191,7 @@ const App: React.FC = () => {
                                     setLanguage(lang);
                                     setIsLangMenuOpen(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm font-semibold transition-colors ${language === lang ? 'bg-indigo-500 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                                className={`w-full text-left px-4 py-2 text-sm font-semibold transition-colors ${language === lang ? 'bg-indigo-500 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'}`}
                             >
                                 {languageLabels[lang]}
                             </button>
@@ -183,7 +215,50 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Main Content Area - Using hidden class to preserve state instead of unmounting */}
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+            <div className="absolute top-24 right-10 w-72 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl z-50 pointer-events-auto settings-modal animate-scale-up text-slate-800 dark:text-white">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold">Particles</h3>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={resetParticleSettings}
+                            className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 hover:text-indigo-500 transition-colors"
+                            title="Restore Default"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
+                        <button onClick={() => setIsSettingsOpen(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-white">✕</button>
+                    </div>
+                </div>
+                
+                {[
+                  { label: 'Density', key: 'density', min: 0.1, max: 3, step: 0.1 },
+                  { label: 'Speed', key: 'speed', min: 0, max: 3, step: 0.1 },
+                  { label: 'Size', key: 'size', min: 0.5, max: 3, step: 0.1 },
+                  { label: 'Connections', key: 'connections', min: 0, max: 300, step: 10 },
+                ].map((item) => (
+                   <div key={item.key} className="mb-4">
+                        <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
+                            <span>{item.label}</span>
+                            <span>
+                                {item.key === 'connections' 
+                                 ? `${particleConfig[item.key as keyof ParticleConfig]}px` 
+                                 : `${Math.round(particleConfig[item.key as keyof ParticleConfig] * 100)}%`}
+                            </span>
+                        </div>
+                        <input 
+                            type="range" min={item.min} max={item.max} step={item.step}
+                            value={particleConfig[item.key as keyof ParticleConfig]}
+                            onChange={(e) => setParticleConfig({...particleConfig, [item.key]: parseFloat(e.target.value)})}
+                            className="w-full h-1.5 bg-slate-300 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+                        />
+                   </div>
+                ))}
+            </div>
+        )}
+
+        {/* Main Content Area */}
         <main className="flex-grow flex items-center justify-center pointer-events-auto p-4 w-full relative">
            <div className={`w-full flex justify-center ${activeTab === AppMode.CLOCK ? 'block' : 'hidden'}`}>
              <ClockView 
@@ -202,7 +277,7 @@ const App: React.FC = () => {
            </div>
         </main>
         
-        {/* GitHub Link - Bottom Left */}
+        {/* GitHub Link */}
         <a 
             href="https://github.com/Metahumanz/timecount2.0" 
             target="_blank" 
@@ -215,7 +290,7 @@ const App: React.FC = () => {
             </svg>
         </a>
 
-        {/* Footer Hint - Fades Out */}
+        {/* Footer Hint */}
         <footer className={`p-6 text-center text-xs font-mono tracking-widest pointer-events-none transition-opacity duration-1000 ${isUiVisible ? 'opacity-40' : 'opacity-0'}`}>
           {t.zenModeHint}
         </footer>

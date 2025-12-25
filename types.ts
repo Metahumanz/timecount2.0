@@ -29,6 +29,13 @@ export enum SoundType {
   ALARM = 'ALARM',
 }
 
+export interface ParticleConfig {
+  density: number;
+  speed: number;
+  size: number;
+  connections: number;
+}
+
 export interface Particle {
   x: number;
   y: number;

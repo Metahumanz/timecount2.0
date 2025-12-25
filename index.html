@@ -4,45 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zentick</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Adaptive Favicon: White clock on dark mode, Dark clock on light mode -->
+    <!-- Adaptive Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHN0eWxlPnBhdGh7ZmlsbDojMzM0MTU1fUBtZWRpYShwcmVmZXJzLWNvbG9yLXNjaGVtZTpkYXJrKXtwYXRoe2ZpbGw6I2UyZThmMH19PC9zdHlsZT48cGF0aCBkPSJNMTYgMkM4LjMgMiAyIDguMyAyIDE2czYuMyAxNCAxNCAxNCAxNC02LjMgMTQtMTRTMjMuNyAyIDE2IDJ6bTAgMjZDOS40IDI4IDQgMjIuNiA0IDE2UzkuNCA0IDE2IDRzMTIgNS40IDEyIDEyLTUuNCAxMi0xMiAxMnptMS0xOGgtMnY3bDUuMyA1LjMgMS40LTEuNC00LjUtNC41VjEweiIvPjwvc3ZnPg==">
-
-    
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        font-family: 'Nunito', sans-serif;
-      }
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(156, 163, 175, 0.3);
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: rgba(156, 163, 175, 0.6);
-      }
-      /* Remove number input spinners */
-      input[type=number]::-webkit-inner-spin-button, 
-      input[type=number]::-webkit-outer-spin-button { 
-        -webkit-appearance: none; 
-        margin: 0; 
-      }
-    </style>
   <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "@fontsource/nunito": "https://esm.sh/@fontsource/nunito@^5.2.7",
+    "@fontsource/fira-code": "https://esm.sh/@fontsource/fira-code@^5.2.7",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>

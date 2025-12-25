@@ -76,10 +76,8 @@ const AnalogClock: React.FC<{ time: Date }> = ({ time }) => {
 
 // --- NIXIE TUBE COMPONENT ---
 const NixieDigit: React.FC<{ char: string }> = ({ char }) => {
-  // Styles for the "glowing filament" effect
-  // Core is white-hot, surrounded by orange, then red-orange bloom
   const glowStyle: React.CSSProperties = {
-      color: '#fff0e6', // Almost white center
+      color: '#fff0e6',
       textShadow: `
           0 0 2px #ffb380,
           0 0 5px #ff7e00,
@@ -102,23 +100,16 @@ const NixieDigit: React.FC<{ char: string }> = ({ char }) => {
 
   return (
     <div className="relative w-16 h-28 sm:w-20 sm:h-36 md:w-24 md:h-44 bg-[#1a1512]/80 backdrop-blur-sm rounded-xl border border-stone-700/50 shadow-[inset_0_0_20px_rgba(0,0,0,0.9),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center overflow-hidden mx-1 group">
-      {/* Glass Reflection */}
       <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none z-20" />
-      
-      {/* Background Mesh (Inactive filaments look) */}
       <div className="absolute inset-0 opacity-10 font-mono text-8xl flex items-center justify-center text-stone-500 z-0">
           8
       </div>
-
-      {/* The Active Filament Digit */}
       <span 
         className="font-mono font-normal text-6xl sm:text-7xl md:text-8xl z-10 animate-digit-pop relative"
         style={glowStyle}
       >
         {char}
       </span>
-
-      {/* Internal "mesh" texture overlay */}
       <div className="absolute inset-0 opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8L3N2Zz4=')] pointer-events-none z-30" />
     </div>
   );
@@ -143,10 +134,24 @@ const getMajorTimezones = (lang: Language): TimezoneOption[] => {
     'Australia/Sydney', 'Pacific/Auckland', 'America/New_York',
     'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo',
   ];
+  
+  // Use BCP 47 locales for proper date formatting
+  const localeMap: Record<Language, string> = {
+    [Language.EN]: 'en-US',
+    [Language.ZH]: 'zh-CN',
+    [Language.DE]: 'de-DE',
+    [Language.ES]: 'es-ES',
+    [Language.FR]: 'fr-FR',
+    [Language.JA]: 'ja-JP',
+  };
+  const locale = localeMap[lang] || 'en-US';
+
   const options: TimezoneOption[] = [{ value: 'local', label: translations[lang].localTime }];
+  
   zones.forEach(zone => {
     try {
-      const offsetPart = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' })
+      // Format the time zone offset/name using the SELECTED language locale
+      const offsetPart = new Intl.DateTimeFormat(locale, { timeZone: zone, timeZoneName: 'shortOffset' })
         .formatToParts(new Date()).find(p => p.type === 'timeZoneName')?.value;
       const regionName = zone.split('/')[1]?.replace('_', ' ') || zone;
       options.push({ value: zone, label: `${regionName} (${offsetPart})` });
@@ -162,7 +167,6 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [timezoneOptions, setTimezoneOptions] = useState<TimezoneOption[]>([]);
   
-  // Initialize from LocalStorage or default
   const [clockStyle, setClockStyle] = useState<ClockStyle>(() => {
       const saved = localStorage.getItem('chronos_clock_style');
       return (saved as ClockStyle) || ClockStyle.DIGITAL;
@@ -170,11 +174,11 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
 
   const mountedTimeRef = useRef(Date.now());
 
-  // Save to LocalStorage whenever style changes
   useEffect(() => {
       localStorage.setItem('chronos_clock_style', clockStyle);
   }, [clockStyle]);
 
+  // Update timezones when language changes
   useEffect(() => {
     setTimezoneOptions(getMajorTimezones(language));
   }, [language]);
@@ -235,13 +239,10 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
 
   return (
     <div className="flex flex-col items-center justify-center animate-fade-in relative z-10 w-full max-w-full px-4">
-      {/* Main Clock Display */}
       <div className="relative group cursor-default flex justify-center items-center py-8 min-h-[300px]">
-        
         {clockStyle === ClockStyle.ANALOG && (
             <AnalogClock time={displayTime} />
         )}
-
         {clockStyle === ClockStyle.DIGITAL && (
             <div className="relative">
                 <h1 className="flex justify-center text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] 2xl:text-[14rem] font-black tracking-tighter leading-none drop-shadow-2xl text-slate-800 dark:text-slate-100 select-none transition-all duration-300 transform">
@@ -249,11 +250,9 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
                         <DigitalDigit key={index} char={char} />
                     ))}
                 </h1>
-                {/* Glow effect */}
                 <div className="absolute -inset-10 bg-indigo-500/5 dark:bg-white/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
             </div>
         )}
-
         {clockStyle === ClockStyle.NIXIE && (
              <div className="flex items-center justify-center gap-1 sm:gap-2 p-4 md:p-8 bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
                  {timeString.split('').map((char, index) => (
@@ -261,16 +260,12 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
                  ))}
              </div>
         )}
-
       </div>
 
-      {/* Controls Container */}
       <div className="mt-6 md:mt-12 flex flex-col items-center space-y-6">
-        
         <div 
           className={`flex gap-4 transition-all duration-1000 ${isUiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
         >
-          {/* Timezone */}
           <div className="relative">
             <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -297,7 +292,6 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
             )}
           </div>
           
-          {/* Toggle Style */}
           <button
             onClick={toggleStyle}
             className="w-12 h-10 md:w-auto md:px-5 md:py-2 rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center gap-2 hover:bg-white/30 dark:hover:bg-white/10 transition-all active:scale-95 dark:text-white text-slate-900"
@@ -308,7 +302,6 @@ const ClockView: React.FC<Props> = ({ isUiVisible, language }) => {
           </button>
         </div>
 
-        {/* Stay Duration */}
         <div className={`text-xs md:text-sm font-bold tracking-widest uppercase transition-opacity duration-1000 dark:text-slate-400 text-slate-500 ${isUiVisible ? 'opacity-50' : 'opacity-30'}`}>
           {translations[language].focusTime}: {stayDuration}
         </div>
